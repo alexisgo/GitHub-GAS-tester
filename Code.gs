@@ -15,6 +15,34 @@ This example code has been put together by Martin Hawksey https://mashe.hawksey.
 */
 
 
+/**
+ * Creates a menu entry in the Google Docs UI when the document is opened.
+ * This method is only used by the regular add-on, and is never called by
+ * the mobile add-on version.
+ *
+ * @param {object} e The event parameter for a simple onOpen trigger. To
+ *     determine which authorization mode (ScriptApp.AuthMode) the trigger is
+ *     running in, inspect e.authMode.
+ */
+function onOpen(e) {
+  // obtain and then record the github authorization url
+  getGithubAuthURL();
+  DocumentApp.getUi().createAddonMenu()
+      .addItem('Login GitHub', 'openGitHubDialog')
+      .addItem('Get File', 'getSmallFileFromGithub')
+      .addToUi();  
+}
+
+function openGitHubDialog() {
+  authorizationUrl = PropertiesService.getScriptProperties().getProperty('GitAuthURL');
+  Logger.log(authorizationUrl)
+  var html = HtmlService.createHtmlOutput('<a href="'+authorizationUrl+'">Sign in with GitHub</a>');
+  DocumentApp.getUi() // Or DocumentApp or FormApp.
+      .showModalDialog(html, 'Dialog title');
+  
+  // Need a way to make the dialog go away / show if it worked or failed
+}
+
 
 /**
  * Getting a file less than 1MB. 
@@ -39,6 +67,17 @@ function getSmallFileFromGithub(){
   
   // This will log the contents of the README to the console
   Logger.log(git_file);
+  
+  // Write the text of the file to the end of the document
+  var body = DocumentApp.getActiveDocument().getBody();
+
+  // Use editAsText to obtain a single text element containing
+  // all the characters in the document.
+  var text = body.editAsText();
+
+  // Insert text at the end of the document.
+  // TO-DO: appendText to where the cursor is
+  text.appendText(git_file);
 }
 
 /**
@@ -107,21 +146,6 @@ function getGithubAuthURL() {
     scriptProperties.setProperty('GitAuthURL', authorizationUrl);
 }
 
-// Create a menu item for logging in to GitHub
-function createMenu() {
-  DocumentApp.getUi() // Or DocumentApp or FormApp.
-      .createMenu('Dialog')
-      .addItem('Open', 'openGitHubDialog')
-      .addToUi();
-}
-
-function openGitHubDialog() {
-  authorizationUrl = PropertiesService.getScriptProperties().getProperty('GitAuthURL');
-  Logger.log(authorizationUrl)
-  var html = HtmlService.createHtmlOutput('<a href="'+authorizationUrl+'">Sign in with GitHub</a>');
-  DocumentApp.getUi() // Or DocumentApp or FormApp.
-      .showModalDialog(html, 'Dialog title');
-}
 
 /*
 
