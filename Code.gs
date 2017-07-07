@@ -75,9 +75,22 @@ function getSmallFileFromGithub(){
   // all the characters in the document.
   var text = body.editAsText();
 
-  // Insert text at the end of the document.
-  // TO-DO: appendText to where the cursor is
-  text.appendText(git_file);
+  // Insert some text at the cursor position and make it bold.
+  var cursor = DocumentApp.getActiveDocument().getCursor();
+  if (cursor) {
+    // Attempt to insert text at the cursor position. 
+    var element = cursor.insertText(git_file);
+    // If the insertion returns null, the cursor's
+    // containing element doesn't allow insertions, so show the user an error message.
+    if (!element) {
+      DocumentApp.getUi().alert('Cannot insert text here.');
+    }
+    // If you can't find the cusor, simply append the text to the end of the document
+  } else {
+    text.appendText(git_file);
+  }
+ 
+  
 }
 
 /**
