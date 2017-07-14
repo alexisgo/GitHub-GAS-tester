@@ -29,16 +29,16 @@ function onOpen(e) {
   getGithubAuthURL();
   DocumentApp.getUi().createAddonMenu()
       .addItem('Login GitHub', 'openGitHubDialog')
-      .addItem('Get File', 'getSmallFileFromGithub')
+      .addItem('Insert Text from File', 'getSmallFileFromGithub')
+      .addItem('InsertTable', 'insertTableFromAsciidoc')
       .addToUi();  
 }
 
 function openGitHubDialog() {
   authorizationUrl = PropertiesService.getScriptProperties().getProperty('GitAuthURL');
-  Logger.log(authorizationUrl)
   var html = HtmlService.createHtmlOutput('<a href="'+authorizationUrl+'">Sign in with GitHub</a>');
   DocumentApp.getUi() // Or DocumentApp or FormApp.
-      .showModalDialog(html, 'Dialog title');
+      .showModalDialog(html, 'Login to GitHub');
   
   // Need a way to make the dialog go away / show if it worked or failed
 }
@@ -53,11 +53,11 @@ function getSmallFileFromGithub(){
   Github.setTokenService(function(){ return getGithubService_().getAccessToken();});
   // set the repository wrapper
   // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO');
-  Github.setRepo('alexisgo', 'MarchMadnessPicker'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
+  Github.setRepo('alexisgo', 'GitHub-GAS-tester'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
   var branch = 'heads/master'; // you can switch to differnt branch
   
   // getting a single file object
-  var git_file_obj = Github.Repository.getContents({ref: branch}, 'README.md');
+  var git_file_obj = Github.Repository.getContents({ref: branch}, 'test.adoc');
   var git_file = Utilities.newBlob(Utilities.base64Decode(git_file_obj.content)).getDataAsString();
   
   // grab the entire data/ folder
@@ -89,32 +89,46 @@ function getSmallFileFromGithub(){
   } else {
     text.appendText(git_file);
   }
- 
-  
 }
 
 /**
- * For files over 1MB you get to fetch as a blob using sha reference. 
- * See https://developer.github.com/v3/git/blobs/#get-a-blob
- */
-function getLargeFileFromGithub(){
-  // set token service
+*
+*/
+function insertTableFromAsciidoc() {
+ // set token service
   Github.setTokenService(function(){ return getGithubService_().getAccessToken();});
   // set the repository wrapper
-  // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO'); 
-  Github.setRepo('mhawksey', 'mhawksey.github.io'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
+  // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO');
+  Github.setRepo('alexisgo', 'GitHub-GAS-tester'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
   var branch = 'heads/master'; // you can switch to differnt branch
   
-  // first we get the git hub directory tree e.g. here getting the tweets sub-dir
-  var tweet_dir = Github.Repository.getContents({ref: 'master'}, 'tweets');
-  // filtering for the filename we are looking for
-  var git_file = tweet_dir.filter(function(el){ return el.name === 'tweets.csv' });
-  // getting the file
-  var git_blob = Utilities.newBlob(Utilities.base64Decode(Github.Repository.getBlob(git_file[0].sha).content)).getDataAsString();
+  // getting a single file object
+  var git_file_obj = Github.Repository.getContents({ref: branch}, 'test.adoc');
+  var git_file = Utilities.newBlob(Utilities.base64Decode(git_file_obj.content)).getDataAsString();
   
-  Logger.log(git_blob);
-}
+  // This will log the contents of the README to the console
+  Logger.log(git_file);
+  
+  // Write table at the cursor
+  var doc = DocumentApp.getActiveDocument();
+  var body = doc.getBody();
+  var cursor = doc.getCursor();
 
+  if (cursor) {
+    var element = cursor.getElement();
+    if (element) {
+      var parent = element.getParent();
+      twoDimensionalArray = convertAsciidocTable(git_file);
+      
+      body.insertTable(parent.getChildIndex(element) + 1, twoDimensionalArray);
+    }
+    else {
+      DocumentApp.getUi().alert('No element; Cannot insert text here.');
+    }
+  } else {
+    DocumentApp.getUi().alert('Could not find the cursor');
+  }
+}
 
 // From Eric Koleda oAuth2 setup
 // See https://github.com/googlesamples/apps-script-oauth2/blob/master/samples/GitHub.gs
