@@ -1,0 +1,7 @@
+[role="tester:name=CoolStuff:description=This is my amazing description"]
+|===
+| TABLE 2 | Col2 | Col3
+| 1 | | 
+| 2 | | 
+|3| | 
+|===
