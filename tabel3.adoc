@@ -1,0 +1,7 @@
+[role="tester:name=CoolStuff:description=This is my amazing description"]
+|===
+| co1 | col2 | Col3
+|A | | 
+|B | | 
+|C| | 
+|===
